@@ -1,0 +1,15 @@
+# Datasets & Index Caching
+datasets/
+*.dataset_index.json
+.dataset_index.json
+
+# Model Weights
+*.pt
+*.pth
+yolov8*.pt
+
+# Python Environment & Cache
+venv/
+.venv/
+__pycache__/
+*.py[cod]
