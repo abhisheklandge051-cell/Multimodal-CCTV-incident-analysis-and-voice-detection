@@ -1,27 +1,102 @@
-# Datasets & Large Data Archives
+# ==========================================
+# Datasets & Large Training Data
+# ==========================================
+XD-voilence_dataset/
 datasets/
-datasets/*
+data/
+raw_data/
+processed_data/
 *.dataset_index.json
 .dataset_index.json
 
+# ==========================================
 # Model Weights & Checkpoints
+# ==========================================
 *.pt
 *.pth
+*.bin
 *.onnx
+*.safetensors
+*.h5
+*.hdf5
+*.ckpt
 *.engine
-yolov8*.pt
+*.tflite
+checkpoints/
+runs/
+wandb/
 
-# Python & Virtual Environments
+# ==========================================
+# Python Virtual Environments & Caching
+# ==========================================
 venv/
 .venv/
+env/
+ENV/
+env.bak/
+venv.bak/
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.egg-info/
+.installed.cfg
+*.egg
 
-# System & IDE
-.vscode/
+# ==========================================
+# Logs, Outputs & Temporary Files
+# ==========================================
+logs/
+*.log
+temp/
+tmp/
+uploads/
+output/
+outputs/
+test_evaluation_report.json
+
+# ==========================================
+# Environment Variables & Secrets
+# ==========================================
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+!.env.example
+
+# ==========================================
+# Frontend & Node.js
+# ==========================================
+node_modules/
+dist/
+build/
+.next/
+.out/
+.cache/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ==========================================
+# IDE & Operating System Files
+# ==========================================
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
 .idea/
+*.swp
+*.swo
+*~
 .DS_Store
+.DS_Store?
+ehthumbs.db
 Thumbs.db
