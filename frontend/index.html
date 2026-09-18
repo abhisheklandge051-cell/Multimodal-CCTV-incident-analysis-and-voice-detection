@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Multimodal CCTV Incident Analysis & Surveillance System</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            cyber: {
+              bg: '#0a0d14',
+              surface: '#101622',
+              card: 'rgba(18, 24, 38, 0.85)',
+              border: 'rgba(255, 255, 255, 0.08)',
+              cyan: '#00f0ff',
+              blue: '#3b82f6',
+              emerald: '#10b981',
+              rose: '#f43f5e',
+              yellow: '#eab308',
+              orange: '#f97316'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Font Awesome Icons CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body class="bg-[#0a0d14] text-slate-100 min-h-screen flex flex-col antialiased selection:bg-cyan-500 selection:text-black">
+
+  <!-- ================= TOP HEADER BAR ================= -->
+  <header class="border-b border-white/10 bg-[#0d121d]/90 backdrop-blur sticky top-0 z-50 px-4 lg:px-6 py-3">
+    <div class="flex flex-wrap items-center justify-between gap-4">
+      
+      <!-- Brand & Project Title -->
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-lg bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 text-lg shadow-[0_0_15px_rgba(0,240,255,0.2)]">
+          <i class="fa-solid fa-shield-halved"></i>
+        </div>
+        <div>
+          <h1 class="text-base lg:text-lg font-bold tracking-tight text-white flex items-center gap-2">
+            MULTIMODAL SURVEILLANCE & INCIDENT ANALYZER
+            <span class="text-xs px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 font-mono border border-cyan-500/40">AI-CCTV v2.0</span>
+          </h1>
+          <p class="text-xs text-slate-400">ResNet50 + Fast Bi-GRU Video Detector • YOLOv8 Security Vision • YAMNet Audio Fusion</p>
+        </div>
+      </div>
+
+      <!-- Quick Status & Controls -->
+      <div class="flex items-center flex-wrap gap-3">
+        <!-- Live Pulse -->
+        <div class="flex items-center space-x-2 px-3 py-1.5 rounded-full bg-slate-900/80 border border-emerald-500/30 text-emerald-400 text-xs font-mono">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 live-dot"></span>
+          <span id="system-connection-badge">SYSTEM ONLINE</span>
+        </div>
+
+        <!-- Camera Selector -->
+        <div class="relative">
+          <select id="camera-select" class="bg-slate-900 border border-white/10 text-slate-300 text-xs rounded-lg px-3 py-1.5 focus:outline-none focus:border-cyan-500 font-mono">
+            <option value="CAM-01">CAM-01 (Main Gate)</option>
+            <option value="CAM-02">CAM-02 (Parking East)</option>
+            <option value="CAM-03">CAM-03 (Corridor B)</option>
+            <option value="CAM-04">CAM-04 (Perimeter North)</option>
+            <option value="WEBCAM">Local Webcam Feed</option>
+          </select>
+        </div>
+
+        <!-- Clock Display -->
+        <div class="hidden sm:flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-slate-900/80 border border-white/10 text-xs font-mono text-slate-300">
+          <i class="fa-regular fa-clock text-cyan-400"></i>
+          <span id="live-clock">--:--:--</span>
+        </div>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- ================= NAVIGATION TABS ================= -->
+  <nav class="border-b border-white/10 bg-[#101622] px-4 lg:px-6">
+    <div class="flex space-x-1 lg:space-x-4 overflow-x-auto py-2 text-sm font-medium">
+      <button onclick="switchTab('live-tab')" id="nav-live-tab" class="tab-btn px-3 py-1.5 rounded-md text-cyan-400 bg-cyan-500/10 border border-cyan-500/30 flex items-center gap-2">
+        <i class="fa-solid fa-video"></i> Live Surveillance Hub
+      </button>
+      <button onclick="switchTab('video-tab')" id="nav-video-tab" class="tab-btn px-3 py-1.5 rounded-md text-slate-400 hover:text-slate-200 hover:bg-slate-800 flex items-center gap-2">
+        <i class="fa-solid fa-file-video"></i> Video Forensics
+      </button>
+      <button onclick="switchTab('audio-tab')" id="nav-audio-tab" class="tab-btn px-3 py-1.5 rounded-md text-slate-400 hover:text-slate-200 hover:bg-slate-800 flex items-center gap-2">
+        <i class="fa-solid fa-waveform-lines"></i> Audio / Voice Lab
+      </button>
+      <button onclick="switchTab('fusion-tab')" id="nav-fusion-tab" class="tab-btn px-3 py-1.5 rounded-md text-slate-400 hover:text-slate-200 hover:bg-slate-800 flex items-center gap-2">
+        <i class="fa-solid fa-network-wired"></i> Late-Fusion Center
+      </button>
+      <button onclick="switchTab('logs-tab')" id="nav-logs-tab" class="tab-btn px-3 py-1.5 rounded-md text-slate-400 hover:text-slate-200 hover:bg-slate-800 flex items-center gap-2">
+        <i class="fa-solid fa-triangle-exclamation"></i> Incident Logs
+      </button>
+      <button onclick="switchTab('specs-tab')" id="nav-specs-tab" class="tab-btn px-3 py-1.5 rounded-md text-slate-400 hover:text-slate-200 hover:bg-slate-800 flex items-center gap-2">
+        <i class="fa-solid fa-circle-info"></i> Architecture Specs
+      </button>
+    </div>
+  </nav>
+
+  <!-- ================= MAIN CONTENT CONTAINER ================= -->
+  <main class="flex-1 p-4 lg:p-6 max-w-7xl w-full mx-auto space-y-6">
+
+    <!-- ================= TAB 1: LIVE SURVEILLANCE HUB ================= -->
+    <section id="live-tab" class="tab-content space-y-6">
+      
+      <!-- Top Alert Banner (Dynamic when incident detected) -->
+      <div id="live-alert-banner" class="hidden p-4 rounded-xl border flex items-center justify-between transition-all duration-300">
+        <div class="flex items-center space-x-3">
+          <div id="alert-banner-icon" class="w-10 h-10 rounded-lg flex items-center justify-center text-lg">
+            <i class="fa-solid fa-bell"></i>
+          </div>
+          <div>
+            <h3 id="alert-banner-title" class="font-bold text-sm tracking-wide">SECURITY ALERT</h3>
+            <p id="alert-banner-desc" class="text-xs opacity-90">High threat activity detected by neural surveillance network.</p>
+          </div>
+        </div>
+        <button onclick="dismissAlertBanner()" class="text-xs px-3 py-1.5 rounded bg-white/10 hover:bg-white/20 transition">Acknowledge</button>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Left: Video Feed & Canvas (8 cols) -->
+        <div class="lg:col-span-8 space-y-4">
+          
+          <div class="glass-panel p-4 relative overflow-hidden">
+            <!-- Feed Header -->
+            <div class="flex items-center justify-between mb-3 text-xs font-mono text-slate-400">
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
+                <span id="active-cam-title" class="text-slate-200 font-bold">LIVE STREAM: CAM-01 (Main Gate)</span>
+                <span class="px-1.5 py-0.5 rounded bg-slate-800 text-[10px] text-cyan-400">1080p @ 30FPS</span>
+              </div>
+              <div class="flex items-center gap-3">
+                <span id="live-fps-badge" class="text-emerald-400">FPS: 29.8</span>
+                <span id="live-db-badge" class="text-yellow-400">AUDIO: 51.4 dB</span>
+              </div>
+            </div>
+
+            <!-- Video & Canvas Container -->
+            <div class="relative aspect-video w-full bg-slate-950 rounded-lg overflow-hidden border border-white/10 flex items-center justify-center">
+              <video id="live-video" class="hidden w-full h-full object-cover" autoplay playsinline muted></video>
+              <canvas id="cctv-canvas" width="800" height="450" class="w-full h-full object-cover"></canvas>
+
+              <!-- Top-Left HUD Overlay -->
+              <div class="absolute top-3 left-3 bg-black/70 backdrop-blur px-3 py-1.5 rounded border border-white/10 font-mono text-xs space-y-0.5 pointer-events-none">
+                <div class="text-slate-400 text-[10px]">INCIDENT STATUS</div>
+                <div id="hud-incident-label" class="font-bold text-emerald-400 text-sm">NORMAL (96.4%)</div>
+              </div>
+
+              <!-- Top-Right Objects Counter -->
+              <div class="absolute top-3 right-3 bg-black/70 backdrop-blur px-3 py-1.5 rounded border border-white/10 font-mono text-xs pointer-events-none text-right">
+                <div class="text-slate-400 text-[10px]">OBJECT DETECTION</div>
+                <div id="hud-objects-label" class="text-cyan-400 font-semibold">2 Persons Detected</div>
+              </div>
+
+              <!-- Weapon Warning Flasher -->
+              <div id="hud-weapon-alert" class="hidden absolute bottom-3 left-3 bg-red-600/90 text-white font-bold px-3 py-1 rounded text-xs animate-bounce flex items-center gap-1.5 pointer-events-none">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <span id="hud-weapon-text">WEAPON DETECTED!</span>
+              </div>
+            </div>
+
+            <!-- Video Controls Bar -->
+            <div class="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs">
+              <div class="flex items-center gap-2">
+                <button id="btn-toggle-stream" onclick="toggleLiveStream()" class="px-3 py-1.5 rounded-lg bg-cyan-500 text-black font-semibold hover:bg-cyan-400 transition flex items-center gap-1.5">
+                  <i class="fa-solid fa-pause"></i> Pause Stream
+                </button>
+                <button onclick="captureSnapshot()" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-200 hover:bg-slate-700 border border-white/10 transition flex items-center gap-1.5">
+                  <i class="fa-solid fa-camera"></i> Snapshot
+                </button>
+                <button onclick="toggleWebcam()" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-200 hover:bg-slate-700 border border-white/10 transition flex items-center gap-1.5">
+                  <i class="fa-solid fa-webcam"></i> Use Webcam
+                </button>
+              </div>
+
+              <!-- Demo Incident Simulator Quick Trigger -->
+              <div class="flex items-center gap-2 font-mono">
+                <span class="text-slate-400">Trigger Incident:</span>
+                <select id="quick-incident-sim" onchange="triggerQuickSim(this.value)" class="bg-slate-900 border border-white/10 text-xs rounded px-2 py-1 text-slate-200 focus:outline-none">
+                  <option value="Normal">Normal</option>
+                  <option value="Abuse">Abuse</option>
+                  <option value="CarAccident">Car Accident</option>
+                  <option value="Explosion">Explosion</option>
+                  <option value="Fighting">Fighting</option>
+                  <option value="Riot">Riot</option>
+                  <option value="Shooting">Shooting (Armed)</option>
+                </select>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Real-Time Threat Activity Log Mini Table -->
+          <div class="glass-panel p-4">
+            <h3 class="text-xs font-mono text-slate-400 uppercase tracking-wider mb-3 flex items-center justify-between">
+              <span>Live CCTV Telemetry & Sensor State</span>
+              <span class="text-cyan-400">Bi-GRU Sequence Buffer: 16/16 frames</span>
+            </h3>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs font-mono">
+              <div class="bg-slate-900/60 p-2.5 rounded border border-white/5">
+                <span class="text-slate-400 block text-[10px]">BACKBONE FEATURE</span>
+                <span class="text-slate-200 font-bold">ResNet-50 (2048-D)</span>
+              </div>
+              <div class="bg-slate-900/60 p-2.5 rounded border border-white/5">
+                <span class="text-slate-400 block text-[10px]">TEMPORAL MODEL</span>
+                <span class="text-slate-200 font-bold">Bi-GRU + ResBlock</span>
+              </div>
+              <div class="bg-slate-900/60 p-2.5 rounded border border-white/5">
+                <span class="text-slate-400 block text-[10px]">AUDIO PIPELINE</span>
+                <span class="text-slate-200 font-bold">YAMNet (1024-D)</span>
+              </div>
+              <div class="bg-slate-900/60 p-2.5 rounded border border-white/5">
+                <span class="text-slate-400 block text-[10px]">FUSION STRATEGY</span>
+                <span class="text-cyan-400 font-bold">Late Decision Alpha</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Right: Incident Breakdown & Probability Panel (4 cols) -->
+        <div class="lg:col-span-4 space-y-4">
+          
+          <!-- 7-Class Incident Probability Meter -->
+          <div class="glass-panel p-4 space-y-4">
+            <div class="flex items-center justify-between border-b border-white/10 pb-2">
+              <h3 class="text-xs font-mono text-slate-400 uppercase tracking-wider">XD-Violence Probability Breakdown</h3>
+              <span class="text-[10px] text-cyan-400 font-mono">EMA Smoothed</span>
+            </div>
+
+            <!-- Probability Bars -->
+            <div id="probability-meters" class="space-y-2.5 text-xs font-mono">
+              <!-- Dynamically populated by JS -->
+            </div>
+          </div>
+
+          <!-- Radar Chart: Visual vs Acoustic Threat Profile -->
+          <div class="glass-panel p-4 space-y-2">
+            <div class="flex items-center justify-between">
+              <h3 class="text-xs font-mono text-slate-400 uppercase tracking-wider">Modal Threat Radar</h3>
+              <span class="text-[10px] text-slate-500 font-mono">Video vs Audio</span>
+            </div>
+            <div class="relative h-48 w-full flex items-center justify-center">
+              <canvas id="radar-chart"></canvas>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ================= TAB 2: VIDEO FORENSIC ANALYSIS ================= -->
+    <section id="video-tab" class="tab-content hidden space-y-6">
+      
+      <div class="glass-panel p-6">
+        <h2 class="text-lg font-bold text-white mb-2 flex items-center gap-2">
+          <i class="fa-solid fa-file-video text-cyan-400"></i>
+          Forensic CCTV Video File Analysis
+        </h2>
+        <p class="text-xs text-slate-400 mb-6">
+          Upload recorded CCTV footage (.mp4, .avi, .mov). The system extracts temporal segments, passes them through the ResNet-50 + Bi-GRU incident model, and produces an interactive risk timeline.
+        </p>
+
+        <!-- Dropzone -->
+        <div id="video-dropzone" class="border-2 border-dashed border-cyan-500/30 hover:border-cyan-400 bg-slate-950/60 p-8 rounded-xl text-center cursor-pointer transition">
+          <input type="file" id="video-file-input" accept="video/*" class="hidden">
+          <div class="w-14 h-14 rounded-full bg-cyan-500/10 text-cyan-400 flex items-center justify-center mx-auto mb-3 text-2xl">
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+          </div>
+          <p class="text-sm font-semibold text-slate-200">Drag & Drop CCTV video here, or <span class="text-cyan-400 underline">browse files</span></p>
+          <p class="text-xs text-slate-500 mt-1">Supports MP4, AVI, MKV, MOV up to 200MB</p>
+          <p id="video-file-name" class="text-xs text-emerald-400 font-mono mt-3 font-semibold"></p>
+        </div>
+
+        <div class="mt-4 flex justify-end">
+          <button id="btn-analyze-video" onclick="submitVideoAnalysis()" class="px-5 py-2 rounded-lg bg-cyan-500 text-black font-semibold text-sm hover:bg-cyan-400 transition flex items-center gap-2">
+            <i class="fa-solid fa-microchip"></i> Execute Deep Forensic Scan
+          </button>
+        </div>
+      </div>
+
+      <!-- Video Analysis Results Container (Hidden until scanned) -->
+      <div id="video-results-container" class="hidden space-y-6">
+        
+        <!-- Peak Incident Banner -->
+        <div class="glass-panel p-5 border-l-4 border-l-cyan-400 flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <span class="text-xs font-mono text-slate-400">PEAK FORENSIC INCIDENT IDENTIFIED</span>
+            <div class="flex items-center gap-3 mt-1">
+              <span id="forensic-peak-class" class="text-xl font-bold text-white">CarAccident</span>
+              <span id="forensic-peak-severity" class="text-xs px-2.5 py-0.5 rounded font-mono font-bold bg-orange-500/20 text-orange-400 border border-orange-500/30">CRITICAL</span>
+            </div>
+            <p id="forensic-peak-desc" class="text-xs text-slate-400 mt-1">Highest anomaly score recorded at timestamp 00:14 with 92.4% confidence.</p>
+          </div>
+          <div class="text-right font-mono">
+            <div class="text-xs text-slate-400">PEAK RISK SCORE</div>
+            <div id="forensic-peak-score" class="text-2xl font-bold text-cyan-400">92.4 / 100</div>
+          </div>
+        </div>
+
+        <!-- Interactive Timeline Scrubber & Risk Curve Chart -->
+        <div class="glass-panel p-5 space-y-3">
+          <h3 class="text-xs font-mono text-slate-400 uppercase tracking-wider">Temporal Incident Risk Curve Across Video Timeline</h3>
+          <div class="h-44 w-full relative">
+            <canvas id="video-timeline-chart"></canvas>
+          </div>
+        </div>
+
+        <!-- Detected Objects Summary & Checkpoints Table -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="glass-panel p-5">
+            <h3 class="text-xs font-mono text-slate-400 uppercase tracking-wider mb-3">Detected Objects & Weapons</h3>
+            <div id="forensic-objects-list" class="flex flex-wrap gap-2 text-xs font-mono">
+              <!-- Injected by JS -->
+            </div>
+          </div>
+
+          <div class="glass-panel p-5">
+            <h3 class="text-xs font-mono text-slate-400 uppercase tracking-wider mb-3">Temporal Checkpoint Events</h3>
+            <div id="forensic-checkpoints-list" class="space-y-2 max-h-56 overflow-y-auto pr-2 text-xs font-mono">
+              <!-- Injected by JS -->
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ================= TAB 3: AUDIO / VOICE ANALYSIS ================= -->
+    <section id="audio-tab" class="tab-content hidden space-y-6">
+      
+      <div class="glass-panel p-6">
+        <h2 class="text-lg font-bold text-white mb-2 flex items-center gap-2">
+          <i class="fa-solid fa-waveform-lines text-cyan-400"></i>
+          Acoustic & Voice Incident Detector (YAMNet)
+        </h2>
+        <p class="text-xs text-slate-400 mb-6">
+          Upload recorded surveillance audio (.wav, .mp3). Extracts 1024-dimensional YAMNet embeddings, applies mean-max temporal pooling, and classifies explosive sounds, gunfire, physical combat shouting, and impact crashes.
+        </p>
+
+        <!-- Dropzone -->
+        <div id="audio-dropzone" class="border-2 border-dashed border-cyan-500/30 hover:border-cyan-400 bg-slate-950/60 p-8 rounded-xl text-center cursor-pointer transition">
+          <input type="file" id="audio-file-input" accept="audio/*" class="hidden">
+          <div class="w-14 h-14 rounded-full bg-cyan-500/10 text-cyan-400 flex items-center justify-center mx-auto mb-3 text-2xl">
+            <i class="fa-solid fa-microphone"></i>
+          </div>
+          <p class="text-sm font-semibold text-slate-200">Drag & Drop surveillance audio here, or <span class="text-cyan-400 underline">browse files</span></p>
+          <p class="text-xs text-slate-500 mt-1">Supports WAV (16kHz recommended), MP3, FLAC</p>
+          <p id="audio-file-name" class="text-xs text-emerald-400 font-mono mt-3 font-semibold"></p>
+        </div>
+
+        <div class="mt-4 flex justify-end">
+          <button id="btn-analyze-audio" onclick="submitAudioAnalysis()" class="px-5 py-2 rounded-lg bg-cyan-500 text-black font-semibold text-sm hover:bg-cyan-400 transition flex items-center gap-2">
+            <i class="fa-solid fa-chart-simple"></i> Run YAMNet Acoustic Inference
+          </button>
+        </div>
+      </div>
+
+      <!-- Audio Results Container -->
+      <div id="audio-results-container" class="hidden space-y-6">
+        
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          
+          <!-- Top Classification Card (5 cols) -->
+          <div class="lg:col-span-5 glass-panel p-5 space-y-4">
+            <div class="flex items-center justify-between border-b border-white/10 pb-2">
+              <span class="text-xs font-mono text-slate-400">ACOUSTIC INFERENCE RESULT</span>
+              <span class="text-xs font-mono text-cyan-400">Mean-Max Pooling</span>
+            </div>
+
+            <div class="space-y-1">
+              <div id="audio-result-class" class="text-2xl font-bold text-white">Shooting</div>
+              <div class="flex items-center gap-2">
+                <span id="audio-result-severity" class="text-xs px-2.5 py-0.5 rounded font-mono font-bold bg-red-500/20 text-red-400 border border-red-500/30">CRITICAL</span>
+                <span id="audio-result-conf" class="text-xs font-mono text-slate-300">Confidence: 91.2%</span>
+              </div>
+            </div>
+
+            <!-- Identified acoustic signature highlights -->
+            <div class="space-y-2 pt-2 border-t border-white/10">
+              <span class="text-xs font-mono text-slate-400 block">Identified Acoustic Signatures:</span>
+              <ul id="audio-signatures-list" class="space-y-1 text-xs font-mono text-slate-300 list-disc list-inside">
+                <!-- Injected by JS -->
+              </ul>
+            </div>
+          </div>
+
+          <!-- 7-Class Audio Probability Chart (7 cols) -->
+          <div class="lg:col-span-7 glass-panel p-5">
+            <h3 class="text-xs font-mono text-slate-400 uppercase tracking-wider mb-3">YAMNet Class Probabilities</h3>
+            <div class="h-56 w-full">
+              <canvas id="audio-probs-chart"></canvas>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ================= TAB 4: MULTIMODAL LATE-FUSION ================= -->
+    <section id="fusion-tab" class="tab-content hidden space-y-6">
+      
+      <div class="glass-panel p-6">
+        <h2 class="text-lg font-bold text-white mb-2 flex items-center gap-2">
+          <i class="fa-solid fa-network-wired text-cyan-400"></i>
+          Multimodal Late Decision Fusion Center
+        </h2>
+        <p class="text-xs text-slate-400 mb-6">
+          Late fusion combines the visual predictions from ResNet50 + Bi-GRU with acoustic predictions from YAMNet. Adjust the fusion weighting coefficient (&alpha;) to prioritize video or audio in noisy or obscured environments.
+        </p>
+
+        <!-- Fusion Formula Box -->
+        <div class="bg-slate-900/80 p-4 rounded-xl border border-white/10 flex flex-wrap items-center justify-between gap-4 font-mono text-xs">
+          <div class="space-y-1">
+            <span class="text-slate-400">MATHEMATICAL DECISION FUSION FORMULA:</span>
+            <div class="text-cyan-300 text-sm font-bold">P_fused(c) = &alpha; &middot; P_video(c) + (1 - &alpha;) &middot; P_audio(c)</div>
+          </div>
+          <div class="text-slate-400 text-right">
+            <span>Current Balance:</span>
+            <span id="fusion-balance-label" class="text-white font-bold ml-1">60% Video / 40% Audio</span>
+          </div>
+        </div>
+
+        <!-- Weight Slider -->
+        <div class="mt-6 space-y-2">
+          <div class="flex justify-between text-xs font-mono text-slate-300">
+            <span>Acoustic Priority (&alpha; = 0.1)</span>
+            <span class="text-cyan-400 font-bold">Modality Weighting Slider (&alpha; = <span id="alpha-val">0.60</span>)</span>
+            <span>Visual Priority (&alpha; = 0.9)</span>
+          </div>
+          <input type="range" id="fusion-alpha-slider" min="0.1" max="0.9" step="0.05" value="0.60" oninput="updateFusionAlpha(this.value)" class="w-full h-2 bg-slate-800 rounded-lg cursor-pointer">
+        </div>
+
+        <div class="mt-6 flex justify-end">
+          <button onclick="runMultimodalDemo()" class="px-5 py-2 rounded-lg bg-cyan-500 text-black font-semibold text-sm hover:bg-cyan-400 transition flex items-center gap-2">
+            <i class="fa-solid fa-shuffle"></i> Run Late Fusion Synthesis
+          </button>
+        </div>
+      </div>
+
+      <!-- Fusion Comparison Container -->
+      <div id="fusion-results-container" class="space-y-6">
+        
+        <!-- Triple Cards Comparison -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          
+          <!-- Visual Prediction Card -->
+          <div class="glass-panel p-4 space-y-2 border-t-2 border-t-cyan-400">
+            <span class="text-xs font-mono text-cyan-400 flex items-center gap-1.5">
+              <i class="fa-solid fa-video"></i> Visual Stream Model
+            </span>
+            <div id="fusion-video-class" class="text-lg font-bold text-white">Fighting</div>
+            <div class="text-xs text-slate-400 font-mono">Confidence: <span id="fusion-video-conf" class="text-slate-200">82.1%</span></div>
+            <div class="text-[10px] text-slate-500">ResNet50 + Bi-GRU Temporal Feature Head</div>
+          </div>
+
+          <!-- Audio Prediction Card -->
+          <div class="glass-panel p-4 space-y-2 border-t-2 border-t-yellow-400">
+            <span class="text-xs font-mono text-yellow-400 flex items-center gap-1.5">
+              <i class="fa-solid fa-volume-high"></i> Acoustic Stream Model
+            </span>
+            <div id="fusion-audio-class" class="text-lg font-bold text-white">Fighting</div>
+            <div class="text-xs text-slate-400 font-mono">Confidence: <span id="fusion-audio-conf" class="text-slate-200">87.4%</span></div>
+            <div class="text-[10px] text-slate-500">YAMNet Embeddings + Residual Head</div>
+          </div>
+
+          <!-- Late Fusion Unified Card -->
+          <div class="glass-panel p-4 space-y-2 border-t-2 border-t-emerald-400 bg-emerald-950/10">
+            <span class="text-xs font-mono text-emerald-400 flex items-center gap-1.5 font-bold">
+              <i class="fa-solid fa-bullseye"></i> Final Multimodal Decision
+            </span>
+            <div id="fusion-fused-class" class="text-lg font-bold text-white">Fighting</div>
+            <div class="text-xs text-slate-400 font-mono">Fused Confidence: <span id="fusion-fused-conf" class="text-emerald-400 font-bold">89.6%</span></div>
+            <div class="text-[10px] text-emerald-300/80">Joint Late Fusion Verified</div>
+          </div>
+
+        </div>
+
+        <!-- Comparative Multi-Bar Chart -->
+        <div class="glass-panel p-5">
+          <h3 class="text-xs font-mono text-slate-400 uppercase tracking-wider mb-3">Multimodal Distribution Comparison (Visual vs Acoustic vs Fused)</h3>
+          <div class="h-64 w-full">
+            <canvas id="fusion-comparison-chart"></canvas>
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ================= TAB 5: INCIDENT RECORDS & LOGS ================= -->
+    <section id="logs-tab" class="tab-content hidden space-y-6">
+      
+      <div class="glass-panel p-5 space-y-4">
+        
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h2 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-clock-rotate-left text-cyan-400"></i>
+              Surveillance Incident History & Audit Trail
+            </h2>
+            <p class="text-xs text-slate-400">Full audit log of detected incidents, camera sources, severity ratings, and investigation status.</p>
+          </div>
+          
+          <div class="flex items-center gap-2">
+            <button onclick="exportLogsCSV()" class="px-3 py-1.5 rounded bg-slate-800 text-slate-200 hover:bg-slate-700 text-xs border border-white/10 font-mono flex items-center gap-1.5">
+              <i class="fa-solid fa-file-csv"></i> Export CSV
+            </button>
+            <button onclick="exportLogsJSON()" class="px-3 py-1.5 rounded bg-slate-800 text-slate-200 hover:bg-slate-700 text-xs border border-white/10 font-mono flex items-center gap-1.5">
+              <i class="fa-solid fa-code"></i> Export JSON
+            </button>
+            <button onclick="fetchIncidents()" class="px-3 py-1.5 rounded bg-cyan-500 text-black font-semibold text-xs hover:bg-cyan-400 transition flex items-center gap-1.5">
+              <i class="fa-solid fa-arrows-rotate"></i> Refresh
+            </button>
+          </div>
+        </div>
+
+        <!-- Filter bar -->
+        <div class="flex flex-wrap gap-3 text-xs font-mono">
+          <select id="log-filter-severity" onchange="filterLogs()" class="bg-slate-900 border border-white/10 text-slate-300 rounded px-2.5 py-1 focus:outline-none">
+            <option value="ALL">All Severities</option>
+            <option value="CRITICAL">Critical Only</option>
+            <option value="HIGH">High Only</option>
+            <option value="SAFE">Safe / Normal</option>
+          </select>
+          <input type="text" id="log-search-input" oninput="filterLogs()" placeholder="Search camera or incident..." class="bg-slate-900 border border-white/10 text-slate-300 rounded px-3 py-1 focus:outline-none placeholder:text-slate-600">
+        </div>
+
+        <!-- Incident Table -->
+        <div class="overflow-x-auto rounded-lg border border-white/10">
+          <table class="w-full text-left text-xs font-mono">
+            <thead class="bg-slate-900/90 text-slate-400 uppercase text-[11px] border-b border-white/10">
+              <tr>
+                <th class="py-3 px-4">Event ID</th>
+                <th class="py-3 px-4">Timestamp</th>
+                <th class="py-3 px-4">Camera / Source</th>
+                <th class="py-3 px-4">Incident Class</th>
+                <th class="py-3 px-4">Severity</th>
+                <th class="py-3 px-4">Confidence</th>
+                <th class="py-3 px-4">Modality</th>
+                <th class="py-3 px-4">Details</th>
+              </tr>
+            </thead>
+            <tbody id="incident-table-body" class="divide-y divide-white/5 bg-slate-950/40 text-slate-300">
+              <!-- Dynamically populated by JS -->
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ================= TAB 6: ARCHITECTURE SPECS ================= -->
+    <section id="specs-tab" class="tab-content hidden space-y-6">
+      
+      <div class="glass-panel p-6 space-y-6">
+        <div>
+          <h2 class="text-lg font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-microchip text-cyan-400"></i>
+            Neural Architecture & System Specifications
+          </h2>
+          <p class="text-xs text-slate-400 mt-1">
+            Technical blueprint of the multimodal surveillance framework constructed for final-year project defense.
+          </p>
+        </div>
+
+        <!-- Pipeline Diagram Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          
+          <div class="bg-slate-900/60 p-5 rounded-xl border border-white/10 space-y-3">
+            <div class="w-8 h-8 rounded-lg bg-cyan-500/10 text-cyan-400 flex items-center justify-center font-bold">1</div>
+            <h3 class="font-bold text-sm text-white">Visual Temporal Stream</h3>
+            <p class="text-xs text-slate-400 leading-relaxed">
+              Video clips (16 frames @ 224&times;224) pass through a <strong>ResNet-50</strong> backbone to extract 2048-dimensional deep feature embeddings. A <strong>2-layer Bidirectional GRU</strong> followed by a <strong>ResNet Residual Block</strong> learns spatio-temporal dynamics and classifies 7 XD-Violence incident categories.
+            </p>
+            <div class="text-[11px] font-mono text-cyan-400 bg-cyan-950/30 p-2 rounded">
+              Input: (B, 16, 2048) &rarr; Output: 7 Class Logits
+            </div>
+          </div>
+
+          <div class="bg-slate-900/60 p-5 rounded-xl border border-white/10 space-y-3">
+            <div class="w-8 h-8 rounded-lg bg-yellow-500/10 text-yellow-400 flex items-center justify-center font-bold">2</div>
+            <h3 class="font-bold text-sm text-white">Acoustic YAMNet Stream</h3>
+            <p class="text-xs text-slate-400 leading-relaxed">
+              Surveillance audio is converted to 16 kHz mono waveforms. The <strong>YAMNet</strong> acoustic model extracts 1024-dimensional frame-level embeddings. <strong>Mean-Max Pooling</strong> captures sustained acoustic context alongside transient explosive bursts like gunshots and impacts.
+            </p>
+            <div class="text-[11px] font-mono text-yellow-400 bg-yellow-950/30 p-2 rounded">
+              Input: (T, 1024) &rarr; Mean-Max (2048) &rarr; 7 Probs
+            </div>
+          </div>
+
+          <div class="bg-slate-900/60 p-5 rounded-xl border border-white/10 space-y-3">
+            <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center font-bold">3</div>
+            <h3 class="font-bold text-sm text-white">Late Decision Fusion</h3>
+            <p class="text-xs text-slate-400 leading-relaxed">
+              Combines independent predictions with dynamic weighting &alpha;. In low-light or occluded scenes, acoustic signals compensate; in noisy scenes, visual features dominate. YOLOv8 simultaneously tags suspicious objects and weapons in real-time.
+            </p>
+            <div class="text-[11px] font-mono text-emerald-400 bg-emerald-950/30 p-2 rounded">
+              P_fused = &alpha; &middot; P_video + (1 - &alpha;) &middot; P_audio
+            </div>
+          </div>
+
+        </div>
+
+        <!-- 7 Incident Classes Grid -->
+        <div class="border-t border-white/10 pt-6">
+          <h3 class="text-xs font-mono text-slate-400 uppercase tracking-wider mb-4">XD-Violence 7 Benchmark Incident Classes</h3>
+          <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3 text-xs font-mono text-center">
+            <div class="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
+              <i class="fa-solid fa-circle-check block text-lg mb-1"></i>
+              Normal
+            </div>
+            <div class="p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-400">
+              <i class="fa-solid fa-hand-fist block text-lg mb-1"></i>
+              Abuse
+            </div>
+            <div class="p-3 rounded-lg bg-orange-500/10 border border-orange-500/30 text-orange-400">
+              <i class="fa-solid fa-car-burst block text-lg mb-1"></i>
+              Car Accident
+            </div>
+            <div class="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400">
+              <i class="fa-solid fa-burst block text-lg mb-1"></i>
+              Explosion
+            </div>
+            <div class="p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/30 text-yellow-400">
+              <i class="fa-solid fa-people-robbery block text-lg mb-1"></i>
+              Fighting
+            </div>
+            <div class="p-3 rounded-lg bg-purple-500/10 border border-purple-500/30 text-purple-400">
+              <i class="fa-solid fa-users-rays block text-lg mb-1"></i>
+              Riot
+            </div>
+            <div class="p-3 rounded-lg bg-red-700/20 border border-red-700/40 text-red-300">
+              <i class="fa-solid fa-person-falling-burst block text-lg mb-1"></i>
+              Shooting
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- ================= FOOTER ================= -->
+  <footer class="border-t border-white/10 bg-[#0d121d] px-6 py-4 text-xs font-mono text-slate-500 flex flex-wrap items-center justify-between gap-4">
+    <div>
+      <span>Multimodal Incident Analysis & Surveillance System</span>
+      <span class="mx-2">&bull;</span>
+      <span>Final-Year B.Tech Capstone Project</span>
+    </div>
+    <div class="flex items-center space-x-4">
+      <span id="api-status-pill" class="text-emerald-400 flex items-center gap-1.5">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> FastAPI Engine Active
+      </span>
+      <span>Port: 8000</span>
+    </div>
+  </footer>
+
+  <!-- Application Logic -->
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
