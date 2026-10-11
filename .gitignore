@@ -6,6 +6,9 @@ datasets/
 data/
 raw_data/
 processed_data/
+xd_voilence_audio_features/
+
+
 *.dataset_index.json
 .dataset_index.json
 
