@@ -2,18 +2,33 @@
 # Datasets & Large Training Data
 # ==========================================
 XD-voilence_dataset/
+XD-violence_dataset/
 datasets/
 data/
 raw_data/
 processed_data/
 xd_voilence_audio_features/
+xd_violence_audio_features/
 features/
 *.dataset_index.json
 .dataset_index.json
+*.npy
+*.npz
+
+# ==========================================
+# Private Biometric & Face Data
+# ==========================================
+authorized_faces/
+faces/
+whitelist_embeddings.pkl
 
 # ==========================================
 # Model Weights & Checkpoints
 # ==========================================
+*.keras
+audio_incident_head.keras
+*.pkl
+*.pickle
 *.pt
 *.pth
 *.bin
@@ -25,8 +40,21 @@ features/
 *.engine
 *.tflite
 checkpoints/
+weights/
+models/
 runs/
 wandb/
+
+# ==========================================
+# Databases & Local Storage
+# ==========================================
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+*.db-wal
+*.db-shm
+incident_alerts.db
 
 # ==========================================
 # Python Virtual Environments & Caching
@@ -60,17 +88,31 @@ tmp/
 uploads/
 output/
 outputs/
+recordings/
+captured_frames/
+snapshots/
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.wav
+*.mp3
+*evaluation_report*.json
 test_evaluation_report.json
 
 # ==========================================
 # Environment Variables & Secrets
 # ==========================================
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.*
 !.env.example
+*.pem
+*.key
+*.crt
+*.cer
+serviceAccountKey.json
+credentials.json
+token.json
 
 # ==========================================
 # Frontend & Node.js
@@ -81,6 +123,8 @@ build/
 .next/
 .out/
 .cache/
+.vite/
+.turbo/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -102,3 +146,4 @@ pnpm-debug.log*
 .DS_Store?
 ehthumbs.db
 Thumbs.db
+desktop.ini
